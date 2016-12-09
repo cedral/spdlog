@@ -654,7 +654,7 @@ inline void spdlog::pattern_formatter::handle_flag(char flag)
     }
 }
 
-inline void spdlog::pattern_formatter::add_customer_formatter(char flag, custom_flag_formatter formatter)
+inline void spdlog::pattern_formatter::add_custom_formatter(char flag, custom_flag_formatter formatter)
 {
     switch (flag)
     {//these flags are already in use.

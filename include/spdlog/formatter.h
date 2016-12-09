@@ -36,7 +36,7 @@ public:
     pattern_formatter(const pattern_formatter&) = delete;
     pattern_formatter& operator=(const pattern_formatter&) = delete;
     void format(details::log_msg& msg) override;
-    void add_customer_formatter(char sig, custom_flag_formatter formatter);
+    void add_custom_formatter(char sig, custom_flag_formatter formatter);
 
 private:
     const std::string _pattern;

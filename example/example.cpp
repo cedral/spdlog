@@ -58,9 +58,9 @@ int main(int, char*[])
         rotating_logger->info("This is another message with custom format");
 
         auto formatter = std::make_shared<spd::pattern_formatter>("%k: %v");
-        formatter->add_custom_formatter('k', [](spd::details::log_msg &msg){ msg.formatted << "Channel 1"; };
-        file_logger->set_formatter(formatter);
-        file_logger->info("This is another message with another custom format using a custom flag");
+        formatter->add_custom_formatter('k', [](spd::details::log_msg &msg){ msg.formatted << "Channel 1"; });
+		my_logger->set_formatter(formatter);
+		my_logger->info("This is another message with another custom format using a custom flag");
 
         // Runtime log levels
         spd::set_level(spd::level::info); //Set global log level to info

@@ -104,11 +104,20 @@ public:
         return _filename;
     }
 
-    static bool file_exists(const filename_t& name)
-    {
+	static bool file_exists(const filename_t& name)
+	{
+		return os::file_exists(name);
+	}
 
-        return os::file_exists(name);
-    }
+	static bool remove(const filename_t& name)
+	{
+		return os::remove(name);
+	}
+
+	static bool rename(const filename_t& from, const filename_t &to)
+	{
+		return os::rename(from, to);
+	}
 
 private:
     FILE* _fd;

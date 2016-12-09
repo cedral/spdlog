@@ -25,7 +25,7 @@ namespace sinks
 /*
  * Trivial file sink with single file as target
  */
-template<class Mutex>
+template<class Mutex, class FileHelper = details::file_helper>
 class simple_file_sink : public base_sink < Mutex >
 {
 public:
@@ -50,7 +50,7 @@ protected:
             _file_helper.flush();
     }
 private:
-    details::file_helper _file_helper;
+    FileHelper _file_helper;
     bool _force_flush;
 };
 
@@ -60,7 +60,7 @@ typedef simple_file_sink<details::null_mutex> simple_file_sink_st;
 /*
  * Rotating file sink based on size
  */
-template<class Mutex>
+template<class Mutex, class FileHelper = details::file_helper>
 class rotating_file_sink : public base_sink < Mutex >
 {
 public:
@@ -120,14 +120,14 @@ private:
             filename_t src = calc_filename(_base_filename, i - 1, _extension);
             filename_t target = calc_filename(_base_filename, i, _extension);
 
-            if (details::file_helper::file_exists(target))
+            if (FileHelper::file_exists(target))
             {
-                if (details::os::remove(target) != 0)
+                if (FileHelper::remove(target) != 0)
                 {
                     throw spdlog_ex("rotating_file_sink: failed removing " + filename_to_str(target), errno);
                 }
             }
-            if (details::file_helper::file_exists(src) && details::os::rename(src, target))
+            if (FileHelper::file_exists(src) && FileHelper::rename(src, target))
             {
                 throw spdlog_ex("rotating_file_sink: failed renaming " + filename_to_str(src) + " to " + filename_to_str(target), errno);
             }
@@ -139,7 +139,7 @@ private:
     std::size_t _max_size;
     std::size_t _max_files;
     std::size_t _current_size;
-    details::file_helper _file_helper;
+    FileHelper _file_helper;
 };
 
 typedef rotating_file_sink<std::mutex> rotating_file_sink_mt;
@@ -178,7 +178,7 @@ struct dateonly_daily_file_name_calculator
 /*
  * Rotating file sink based on date. rotates at midnight
  */
-template<class Mutex, class FileNameCalc = default_daily_file_name_calculator>
+template<class Mutex, class FileNameCalc = default_daily_file_name_calculator, class FileHelper = details::file_helper>
 class daily_file_sink :public base_sink < Mutex >
 {
 public:
@@ -235,7 +235,7 @@ private:
     int _rotation_h;
     int _rotation_m;
     std::chrono::system_clock::time_point _rotation_tp;
-    details::file_helper _file_helper;
+    FileHelper _file_helper;
 };
 
 typedef daily_file_sink<std::mutex> daily_file_sink_mt;
