@@ -20,8 +20,10 @@ inline spdlog::logger::logger(const std::string& logger_name, const It& begin, c
     _sinks(begin, end),
     _formatter(std::make_shared<pattern_formatter>("%+"))
 {
-    _level = level::info;
+    _level = level::off;
     _flush_level = level::off;
+	for (auto &p : _sinks) //default level to lowest one your sinks will process.
+		if (p->level() < _level) _level = p->level();
     _last_err_time = 0;
     _err_handler = [this](const std::string &msg)
     {

@@ -64,7 +64,33 @@ template<class Mutex, class FileHelper = details::file_helper>
 class rotating_file_sink : public base_sink < Mutex >
 {
 public:
-    rotating_file_sink(const filename_t &base_filename, const filename_t &extension,
+	rotating_file_sink(const filename_t &filename,
+		std::size_t max_size, std::size_t max_files) :
+		_max_size(max_size),
+		_max_files(max_files),
+		_current_size(0),
+		_file_helper()
+	{
+		size_t ndx = filename.find_last_of('.');
+		size_t ndxs1 = filename.find_last_of('\\');
+		size_t ndxs2 = filename.find_last_of('/');
+		if (ndx == filename_t::npos && (ndx < ndxs1 || ndx < ndxs2)) //dot is not in filename portion
+		{
+			_base_filename = filename;
+			_extension.push_back('t');
+			_extension.push_back('x');
+			_extension.push_back('t');
+		}
+		else
+		{
+			_base_filename = filename.substr(0, ndx);
+			_extension = filename.substr(ndx + 1);
+		}
+		_file_helper.open(calc_filename(_base_filename, 0, _extension));
+		_current_size = _file_helper.size(); //expensive. called only once
+	}
+	
+	rotating_file_sink(const filename_t &base_filename, const filename_t &extension,
                        std::size_t max_size, std::size_t max_files                       ) :
         _base_filename(base_filename),
         _extension(extension),
@@ -183,11 +209,39 @@ class daily_file_sink :public base_sink < Mutex >
 {
 public:
     //create daily file sink which rotates on given time
-    daily_file_sink(
+	daily_file_sink(
+		const filename_t& filename,
+		int rotation_hour = 0,
+		int rotation_minute = 0) : 
+		_rotation_h(rotation_hour),
+		_rotation_m(rotation_minute)
+	{
+		if (rotation_hour < 0 || rotation_hour > 23 || rotation_minute < 0 || rotation_minute > 59)
+			throw spdlog_ex("daily_file_sink: Invalid rotation time in ctor");
+		_rotation_tp = _next_rotation_tp();
+		size_t ndx = filename.find_last_of('.');
+		size_t ndxs1 = filename.find_last_of('\\');
+		size_t ndxs2 = filename.find_last_of('/');
+		if (ndx == filename_t::npos && (ndxs2 < ndx ||ndxs2 < ndx)) //dot is not in filename portion
+		{
+			_base_filename = filename;
+			_extension.push_back('t');
+			_extension.push_back('x');
+			_extension.push_back('t');
+		}
+		else
+		{
+			_base_filename = filename.substr(0, ndx);
+			_extension = filename.substr(ndx + 1);
+		}
+		_file_helper.open(FileNameCalc::calc_filename(_base_filename, _extension));
+	}
+	
+	daily_file_sink(
         const filename_t& base_filename,
         const filename_t& extension,
-        int rotation_hour,
-        int rotation_minute) : _base_filename(base_filename),
+        int rotation_hour = 0,
+        int rotation_minute = 0) : _base_filename(base_filename),
         _extension(extension),
         _rotation_h(rotation_hour),
         _rotation_m(rotation_minute)
