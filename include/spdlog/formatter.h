@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <spdlog/details/log_msg.h>
+#include "spdlog/details/log_msg.h"
 
 #include <vector>
 #include <string>
@@ -29,10 +29,10 @@ public:
 
 typedef std::function<void(details::log_msg& msg)> custom_flag_formatter;
 
-class pattern_formatter : public formatter
+class pattern_formatter SPDLOG_FINAL : public formatter
 {
 public:
-    explicit pattern_formatter(const std::string& pattern);
+    explicit pattern_formatter(const std::string& pattern, pattern_time_type pattern_time = pattern_time_type::local);
     pattern_formatter(const pattern_formatter&) = delete;
     pattern_formatter& operator=(const pattern_formatter&) = delete;
     void format(details::log_msg& msg) override;
@@ -41,11 +41,13 @@ public:
 private:
     const std::string _pattern;
     std::unordered_map<char, custom_flag_formatter> _custom_formatters;
+    const pattern_time_type _pattern_time;
     std::vector<std::unique_ptr<details::flag_formatter>> _formatters;
+    std::tm get_time(details::log_msg& msg);
     void handle_flag(char flag);
     void compile_pattern(const std::string& pattern);
 };
 }
 
-#include <spdlog/details/pattern_formatter_impl.h>
+#include "spdlog/details/pattern_formatter_impl.h"
 
