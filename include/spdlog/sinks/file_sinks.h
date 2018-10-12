@@ -211,43 +211,43 @@ class daily_file_sink SPDLOG_FINAL : public base_sink < Mutex >
 {
 public:
     //create daily file sink which rotates on given time
-	daily_file_sink(
-		const filename_t& filename,
-		int rotation_hour = 0,
-		int rotation_minute = 0) : 
-		_rotation_h(rotation_hour),
-		_rotation_m(rotation_minute)
+    daily_file_sink(
+	    const filename_t& filename,
+	    int rotation_hour = 0,
+	    int rotation_minute = 0) : 
+	    _rotation_h(rotation_hour),
+	    _rotation_m(rotation_minute)
+    {
+	if (rotation_hour < 0 || rotation_hour > 23 || rotation_minute < 0 || rotation_minute > 59)
+		throw spdlog_ex("daily_file_sink: Invalid rotation time in ctor");
+	_rotation_tp = _next_rotation_tp();
+	size_t ndx = filename.find_last_of('.');
+	size_t ndxs1 = filename.find_last_of('\\');
+	size_t ndxs2 = filename.find_last_of('/');
+	if (ndx == filename_t::npos && (ndxs2 < ndx ||ndxs2 < ndx)) //dot is not in filename portion
 	{
-		if (rotation_hour < 0 || rotation_hour > 23 || rotation_minute < 0 || rotation_minute > 59)
-			throw spdlog_ex("daily_file_sink: Invalid rotation time in ctor");
-		_rotation_tp = _next_rotation_tp();
-		size_t ndx = filename.find_last_of('.');
-		size_t ndxs1 = filename.find_last_of('\\');
-		size_t ndxs2 = filename.find_last_of('/');
-		if (ndx == filename_t::npos && (ndxs2 < ndx ||ndxs2 < ndx)) //dot is not in filename portion
-		{
-			_base_filename = filename;
-			_extension.push_back('t');
-			_extension.push_back('x');
-			_extension.push_back('t');
-		}
-		else
-		{
-			_base_filename = filename.substr(0, ndx);
-			_extension = filename.substr(ndx + 1);
-		}
-		_file_helper.open(FileNameCalc::calc_filename(_base_filename, _extension));
+	    _base_filename = filename;
+	    _extension.push_back('t');
+	    _extension.push_back('x');
+	    _extension.push_back('t');
 	}
+	else
+	{
+	    _base_filename = filename.substr(0, ndx);
+	    _extension = filename.substr(ndx + 1);
+	}
+	_file_helper.open(FileNameCalc::calc_filename(_base_filename, _extension));
+    }
 	
-	daily_file_sink(
-        const filename_t& base_filename,
-        const filename_t& extension,
-        int rotation_hour = 0,
-        int rotation_minute = 0) : 
-        _base_filename(base_filename),
-        _extension(extension),
-        _rotation_h(rotation_hour),
-        _rotation_m(rotation_minute)
+    daily_file_sink(
+    const filename_t& base_filename,
+    const filename_t& extension,
+    int rotation_hour = 0,
+    int rotation_minute = 0) : 
+    _base_filename(base_filename),
+    _extension(extension),
+    _rotation_h(rotation_hour),
+    _rotation_m(rotation_minute)
     {
         if (rotation_hour < 0 || rotation_hour > 23 || rotation_minute < 0 || rotation_minute > 59)
             throw spdlog_ex("daily_file_sink: Invalid rotation time in ctor");
@@ -261,7 +261,7 @@ protected:
     {
         if (std::chrono::system_clock::now() >= _rotation_tp)
         {
-            _file_helper.open(FileNameCalc::calc_filename(_base_filename));
+            _file_helper.open(FileNameCalc::calc_filename(_base_filename, _extension));
             _rotation_tp = _next_rotation_tp();
         }
         _file_helper.write(msg);
@@ -288,6 +288,7 @@ private:
             return std::chrono::system_clock::time_point(rotation_time + std::chrono::hours(24));
     }
 
+    filename_t _extension;
     filename_t _base_filename;
     int _rotation_h;
     int _rotation_m;
