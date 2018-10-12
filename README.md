@@ -8,19 +8,20 @@ Very fast, header only, C++ logging library. [![Build Status](https://travis-ci.
 
 * Copy the source [folder](https://github.com/gabime/spdlog/tree/master/include/spdlog) to your build tree and use a C++11 compiler.
 
-#### Or use your favourite package manager:
+#### Or use your favorite package manager:
 
 * Ubuntu: `apt-get install libspdlog-dev`
 * Homebrew: `brew install spdlog`
 * FreeBSD:  `cd /usr/ports/devel/spdlog/ && make install clean`
 * Fedora: `yum install spdlog`
-* Arch Linux: `pacman -S spdlog-git`
+* Gentoo: `emerge dev-libs/spdlog`
+* Arch Linux: `yaourt -S spdlog-git`
 * vcpkg: `vcpkg install spdlog`
  
 
 ## Platforms
- * Linux, FreeBSD, Solaris
- * Windows (vc 2013+, cygwin/mingw)
+ * Linux, FreeBSD, Solaris, AIX
+ * Windows (vc 2013+, cygwin)
  * Mac OSX (clang 3.5+)
  * Android
 
@@ -28,7 +29,8 @@ Very fast, header only, C++ logging library. [![Build Status](https://travis-ci.
 * Very fast - performance is the primary goal (see [benchmarks](#benchmarks) below).
 * Headers only, just copy and use.
 * Feature rich [call style](#usage-example) using the excellent [fmt](https://github.com/fmtlib/fmt) library.
-* Extremely fast asynchronous mode (optional) - using lockfree queues and other tricks to reach millions of calls/sec.
+* Optional printf syntax support.
+* Asynchronous mode (optional)
 * [Custom](https://github.com/gabime/spdlog/wiki/3.-Custom-formatting) formatting.
 * Conditional Logging
 * Multi/Single threaded loggers.
@@ -52,9 +54,9 @@ Time needed to log 1,000,000 lines in synchronous mode (in seconds, the best of 
 
 |threads|boost log 1.54|glog   |easylogging |spdlog|
 |-------|:-------:|:-----:|----------:|------:|
-|1|       4.169s  |1.066s |0.975s     |0.302s|
-|10|     6.180s   |3.032s |2.857s     |0.968s|
-|100|     5.981s  |1.139s |4.512s     |0.497s|
+|1|       4.169s  |1.066s |0.975s     |0.392s|
+|10|     6.180s   |3.032s |2.857s     |0.773s|
+|100|     5.981s  |1.139s |4.512s     |0.587s|
 
 
 #### Asynchronous mode
@@ -62,9 +64,9 @@ Time needed to log 1,000,000 lines in asynchronous mode, i.e. the time it takes 
 
 |threads|g2log <sup>async logger</sup>   |spdlog <sup>async mode</sup>|
 |:-------|:-----:|-------------------------:|
-|1|       1.850s |0.216s |
-|10|      0.943s  |0.173s|
-|100|      0.959s |0.202s|
+|1|       1.850s |0.39s |
+|10|      0.943s  |0.416s|
+|100|      0.959s |0.413s|
 
 
 
@@ -91,19 +93,15 @@ int main(int, char*[])
         auto console = spd::stdout_color_mt("console");
         console->info("Welcome to spdlog!");
         console->error("Some error message with arg{}..", 1);
-
-	// Conditional logging example
-        auto i = 2;
-        console->warn_if(i != 0, "an important message");
-
+	
         // Formatting examples
         console->warn("Easy padding in numbers like {:08d}", 12);
         console->critical("Support for int: {0:d};  hex: {0:x};  oct: {0:o}; bin: {0:b}", 42);
         console->info("Support for floats {:03.2f}", 1.23456);
         console->info("Positional args are {1} {0}..", "too", "supported");
         console->info("{:<30}", "left aligned");
-        
-
+	
+	// Use global registry to retrieve loggers
         spd::get("console")->info("loggers can be retrieved from a global registry using the spdlog::get(logger_name) function");
         
         // Create basic file logger (not rotated)
@@ -111,26 +109,26 @@ int main(int, char*[])
         my_logger->info("Some log message");
 
         // Create a file rotating logger with 5mb size max and 3 rotated files
-        auto rotating_logger = spd::rotating_logger_mt("some_logger_name", "logs/mylogfile", 1048576 * 5, 3);
+        auto rotating_logger = spd::rotating_logger_mt("some_logger_name", "logs/mylogfile.txt", 1048576 * 5, 3);
         for (int i = 0; i < 10; ++i)
             rotating_logger->info("{} * {} equals {:>10}", i, i, i*i);
 
         // Create a daily logger - a new file is created every day on 2:30am
-        auto daily_logger = spd::daily_logger_mt("daily_logger", "logs/daily", 2, 30);
+        auto daily_logger = spd::daily_logger_mt("daily_logger", "logs/daily.txt", 2, 30);
         // trigger flush if the log severity is error or higher
         daily_logger->flush_on(spd::level::err);
         daily_logger->info(123.44);
 
         // Customize msg format for all messages
-        spd::set_pattern("*** [%H:%M:%S %z] [thread %t] %v ***");
-        rotating_logger->info("This is another message with custom format");
-
+        spd::set_pattern("[%^+++%$] [%H:%M:%S %z] [thread %t] %v");
+        console->info("This an info message with custom format (and custom color range between the '%^' and '%$')");
+	console->error("This an error message with custom format (and custom color range between the '%^' and '%$')");
 
         // Runtime log levels
 	spd::set_level(spd::level::info); //Set global log level to info
-	console->debug("This message shold not be displayed!");
+	console->debug("This message should not be displayed!");
 	console->set_level(spd::level::debug); // Set specific logger's log level
-	console->debug("This message shold be displayed..");
+	console->debug("This message should be displayed..");
 
         // Compile time log levels
         // define SPDLOG_DEBUG_ON or SPDLOG_TRACE_ON
@@ -172,7 +170,7 @@ int main(int, char*[])
 
 void async_example()
 {
-    size_t q_size = 4096; //queue size must be power of 2
+    size_t q_size = 4096; 
     spd::set_async_mode(q_size);
     auto async_file = spd::daily_logger_st("async_file_logger", "logs/async_log.txt");
     for (int i = 0; i < 100; ++i)
