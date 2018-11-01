@@ -1,4 +1,5 @@
 # Auto generated files
+.vs/
 build/*
 *.slo
 *.lo
@@ -37,6 +38,7 @@ build/*
 # backup files 
 *.orig
 *~
+*.swp
 
 # example  files
 example/*
