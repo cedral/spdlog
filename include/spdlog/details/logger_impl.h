@@ -17,15 +17,14 @@ inline spdlog::logger::logger(const std::string& logger_name, const It& begin, c
     _name(logger_name),
     _sinks(begin, end),
     _formatter(std::make_shared<pattern_formatter>("%+")),
-    _level(level::info),
+    _level(level::off),
     _flush_level(level::off),
     _last_err_time(0),
     _msg_counter(1)  // message counter will start from 1. 0-message id will be reserved for controll messages
 {
-    _level = level::off;
-    _flush_level = level::off;
     for (auto &p : _sinks) //default level to lowest one your sinks will process.
-        if (p->level() < _level) _level = p->level();
+        if (p->level() < _level.load(std::memory_order::memory_order_relaxed))
+            _level.store(p->level());
     _last_err_time = 0;
     _err_handler = [this](const std::string &msg)
     {

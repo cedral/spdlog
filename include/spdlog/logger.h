@@ -28,7 +28,7 @@ public:
     logger(const std::string &name, sinks_init_list sinks);
 
     template<class It>
-    logger(std::string name, const It &begin, const It &end);
+    logger(const std::string &name, const It &begin, const It &end);
 
     virtual ~logger();
 
