@@ -1627,11 +1627,11 @@ private:
 #endif
     MakeValue(typename WCharHelper<wchar_t *, Char>::Unsupported);
     MakeValue(typename WCharHelper<const wchar_t *, Char>::Unsupported);
-    MakeValue(typename WCharHelper<const std::wstring &, Char>::Unsupported);
-#if FMT_HAS_STRING_VIEW
-    MakeValue(typename WCharHelper<const std::wstring_view &, Char>::Unsupported);
-#endif
-    MakeValue(typename WCharHelper<WStringRef, Char>::Unsupported);
+//    MakeValue(typename WCharHelper<const std::wstring &, Char>::Unsupported);
+//#if FMT_HAS_STRING_VIEW
+//    MakeValue(typename WCharHelper<const std::wstring_view &, Char>::Unsupported);
+//#endif
+//    MakeValue(typename WCharHelper<WStringRef, Char>::Unsupported);
 
     void set_string(StringRef str)
     {
